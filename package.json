@@ -1,0 +1,15 @@
+{
+  "name": "major-project",
+  "version": "1.0.0",
+  "description": "a backend on merge of youtube and twitter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "author": "Satyendra Kumar Rawat",
+  "license": "ISC"
+}
