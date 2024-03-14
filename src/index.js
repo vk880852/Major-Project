@@ -4,15 +4,17 @@ import { app } from './app.js';
 dotenv.config({
     path:'./env'
 })
-connectDB().then(()=>{
-    app.on("error",(error)=>{
-       console.log("error",error);
-       throw error;
-    })
-    app.listen(process.env.PORT||8000,()=>{
-        console.log("connected to the server");
-    })
-}).catch(error,()=>{
-    console.log("error occurs during to connect db",db)
-});
+connectDB()
+  .then(() => {
+    app.on("error", (error) => {
+      console.log("error", error);
+      throw error;
+    });
+    app.listen(process.env.PORT || 8000, () => {
+      console.log("connected to the server");
+    });
+  })
+  .catch((err) => {
+    console.log("error occurs during connecting to the database", err);
+  });
 
