@@ -1,11 +1,10 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import {uploadOnCloudinary,deleteOnCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
-
 const generateAccessAndRefreshToken=async(user)=>
 {
     try{
@@ -119,7 +118,6 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
     try {
         const decodedtoken= jwt.verify(oldrefreshtoken,process.env.REFRESH_TOKEN_SECRET);
         const user=await User.findById(decodedtoken?._id);
-       // console.log(user);
         const newrefreshtoken=user?.refreshtoken;
         if(oldrefreshtoken!==newrefreshtoken)
         {
@@ -137,6 +135,60 @@ const refreshAccessToken=asyncHandler(async(req,res)=>{
         throw new ApiError(401,"Invalid refresh-token");
     }
 })
+const changeCurrentPassword=asyncHandler(async(req,res)=>{
+      const {newPassword,confirmPassword,oldPassword}=req.body;
+      if(newPassword!==confirmPassword)
+      {
+        return new ApiError(201,"newPassword and confirmPassword is not same");
+      }
+      const user=await User.findById(req.user._id);
+      const verifypassword=await user.isPasswordCorrect(oldPassword);
+      if(!verifypassword)
+      {
+        throw new ApiError(400,"invalid Password");
+      }
+      user.password=newPassword;
+      await user.save({validateBeforeSave:false});
+      return res.status(200).json(new ApiResponse(200,{},"password change successfully")); 
+})
+const updateAvatar=asyncHandler(async(req,res)=>{
+    const avatarLocalPath=req?.file?.path;
+    if(!avatarLocalPath)
+    {
+        throw new ApiError(400,"new avatar-file is not availble");
+    }
+    const oldAvatar = req.user.avatar;
+    const avatarh = oldAvatar.split("/");
+    const publicIdavatar= avatarh[avatarh.length - 1].split(".")[0];
+    deleteOnCloudinary(publicIdavatar);
+    const cloudinarylocalpath=await uploadOnCloudinary(avatarLocalPath);
+    const user=await User.findOneAndUpdate(req.user._id,{
+         $set:{
+             avatar:cloudinarylocalpath.url
+        }
+     }).select("-password -refreshtoken");
+     return res.status(200).json(new ApiResponse(200,user,"Avatar-file is uploaded successfully"));
+})
+const updateCoverimage=asyncHandler(async(req,res)=>{
+    
+    const coverimageLocalPath=req?.file?.path;
+    if(!coverimageLocalPath)
+    {
+        throw new ApiError(400,"new avatar-file is not availble");
+    }
+    const oldcoverimage = req.user.coverimage;
+    const avatarh = oldcoverimage.split("/");
+    const publicIdavatar= avatarh[avatarh.length - 1].split(".")[0];
+    deleteOnCloudinary(publicIdavatar);
+    const cloudinarylocalpath=await uploadOnCloudinary(coverimageLocalPath);
+    const user=await User.findOneAndUpdate(req.user._id,{
+         $set:{
+             coverimage:cloudinarylocalpath.url
+        }
+     }).select("-password -refreshtoken");
+     return res.status(200).json(new ApiResponse(200,user,"coverimage-file is uploaded successfully"));
+})
 
 
-export  {registerUser,loginUser,logoutUser,refreshAccessToken};
+
+export  {registerUser,loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,updateAvatar,updateCoverimage};

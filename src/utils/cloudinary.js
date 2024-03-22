@@ -1,6 +1,8 @@
 import {v2 as cloudinary} from 'cloudinary';
 import fs from 'fs'
 import express from 'express'
+import asyncHandler from './asyncHandler.js';
+import { ApiError } from './ApiError.js';
 const app=express(); 
 cloudinary.config({ 
   cloud_name: process.env.CLOUD_NAME, 
@@ -23,4 +25,15 @@ const uploadOnCloudinary=async(localpath)=>{
         return null
     }
 }
-export default uploadOnCloudinary;
+const deleteOnCloudinary=async(localpath)=>{
+  try{
+     await cloudinary.uploader.destroy(localpath);
+     console.log("old avatar deleted successfully");
+  }
+  catch(error)
+  {
+    throw new ApiError("failed during deletion",error);
+  }
+}
+
+export { uploadOnCloudinary,deleteOnCloudinary};
