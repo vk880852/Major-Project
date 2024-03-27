@@ -15,12 +15,12 @@ const uploadOnCloudinary=async(localpath)=>{
        const res=  await cloudinary.uploader.upload(localpath,{
             resource_type:'auto'
          })
-         fs.unlinkSync(localpath);
+         await fs.unlinkSync(localpath);
          return res; 
     }
     catch(error)
     {
-        fs.unlinkSync(localpath);
+        await fs.unlinkSync(localpath);
         //if uplaod is failed
         return null
     }
@@ -35,5 +35,6 @@ const deleteOnCloudinary=async(localpath)=>{
     throw new ApiError("failed during deletion",error);
   }
 }
+
 
 export { uploadOnCloudinary,deleteOnCloudinary};
