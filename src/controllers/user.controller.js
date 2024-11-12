@@ -1,4 +1,5 @@
 import asyncHandler from "../utils/asyncHandler.js";
+
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import {uploadOnCloudinary,deleteOnCloudinary} from "../utils/cloudinary.js";
@@ -21,34 +22,26 @@ const generateAccessAndRefreshToken=async(user)=>
     }
 }
 const registerUser = asyncHandler(async (req, res) => {
-    // Take the email, username, fullname, and password from request body
     const { username, fullname, email, password } = req.body;
-    // Check if any required field is empty
     if ([username, fullname, email, password].some(field => field?.trim()==="")) {
         throw new ApiError(400, "All fields are required");
     }
-    // Check if username or email already exists
     if (await User.findOne({ $or: [{ username }, { email }] })) {
         throw new ApiError(409, "Username or email already exists");
     }
-    // Get the local paths of avatar and cover image files
     const avatarLocalPath = req.files?.avatar?.[0]?.path||"";
     const coverLocalPath = req.files?.coverimage?.[0]?.path || "";
-    // Check if avatar file is provided
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required");
     }
     
-    // Upload avatar and cover image files to Cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverimage = coverLocalPath ? await uploadOnCloudinary(coverLocalPath) : "";
 
-    // Check if avatar upload was successful
     if (!avatar) {
         throw new ApiError(500, "Error uploading avatar file");
     }
 
-    //Create the user
     const newUser = await User.create({
         fullname,
         avatar: avatar.url,
@@ -57,12 +50,10 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         username:username.toLowerCase(),
     });
-    // Check if user creation was successful
     if (!newUser) {
         throw new ApiError(500, "Error creating user");
     }
 
-    // Return the newly created user (excluding sensitive information)
     const createdUser = await User.findById(newUser._id).select("-password -refreshtoken");
 
     return res.status(201).json(new ApiResponse(200, createdUser, "User registered successfully"));
@@ -199,7 +190,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     //console.log(username);
     const channel = await User.aggregate([
         {
-            $match: { username: username }
+            $match: { username: username?.toLowerCase() }
         },
         {
             $lookup: {
@@ -250,53 +241,59 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     }
     return res.status(200).json(new ApiResponse(200, channel[0], "User channel fetched successfully"));
 });
-const getWatchHistory=asyncHandler(async(req,res)=>
-{
-    const user = req.user?._id;
-    if (!user) {
-        throw new ApiError(404, "User does not exist");
-    }
-    const watchHistory = await User.aggregate([
+const getWatchHistory = asyncHandler(async(req, res) => {
+    const user = await User.aggregate([
         {
-            $match: { _id:new mongoose.Types.ObjectId(user) }
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
         },
         {
-            $lookup:
-            { 
-                from :"videos",
-                localField:"watchHistory",
-                foreignField:"_id",
-                as:"history",
-                pipeline:{
-                    $lookup:{
-                        from:"users",
-                        localField:"owner",
-                        foreignField:"_id",
-                        as:"owner",
-                        pipelien:{
-                            $project:{
-                                fullname:1,
-                                username:1,
-                                avatar:1,
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first: "$owner"
                             }
                         }
                     }
-                }
-            }
-        },
-        {
-            $addFields:{
-                owner:{
-                    $first:"$owner"
-                }
+                ]
             }
         }
-        
-        // Add more stages as needed for your aggregation
-    ]);
-    return res.status(200).json(new ApiResponse(200, watchHistory, "Watch history fetched successfully"));
-})
+    ])
 
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch history fetched successfully"
+        )
+    )
+})
 export  
 {
     registerUser,

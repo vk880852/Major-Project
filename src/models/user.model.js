@@ -11,7 +11,7 @@ const userSchema=new Schema
             unique:true,
             lowercase:true,
             trim:true,
-            index:true
+            index:true,
         },
         email:{
             type:String,
@@ -27,7 +27,7 @@ const userSchema=new Schema
             index:true
         },
         avatar:{
-            type:String,//for cloudinaryurl
+            type:String,
             required:true,
             
         },

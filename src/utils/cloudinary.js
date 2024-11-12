@@ -12,7 +12,7 @@ cloudinary.config({
 const uploadOnCloudinary=async(localpath)=>{
     try{
          if(!localpath)return null;
-       const res=  await cloudinary.uploader.upload(localpath,{
+            const res=  await cloudinary.uploader.upload(localpath,{
             resource_type:'auto'
          })
          await fs.unlinkSync(localpath);
@@ -27,8 +27,7 @@ const uploadOnCloudinary=async(localpath)=>{
 }
 const deleteOnCloudinary=async(localpath)=>{
   try{
-     await cloudinary.uploader.destroy(localpath);
-     console.log("old avatar deleted successfully");
+     await cloudinary.uploader.destroy(localpath,{ type: 'upload', resource_type: 'video' });
   }
   catch(error)
   {

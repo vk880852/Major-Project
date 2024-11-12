@@ -1,9 +1,9 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import jwt  from "jsonwebtoken";
-import dotenv from "dotenv"
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 export const verifyJWT=asyncHandler(async(req,res,next)=>{
+      console.log(`Jai Shree Ram-Krishna Auth`);
       const token = (req.cookies?.accesstoken) || (req.header("Authorization")?.replace("Bearer ", ""));
       if(!token)
       {
