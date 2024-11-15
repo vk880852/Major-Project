@@ -10,7 +10,6 @@ const createTweet = asyncHandler(async (req, res) => {
   
     const newTweet = await Tweet.create({ content:text, owner: req.user._id });
     
-    console.log({text,newTweet});
     const fullInformation = await Tweet.findById(newTweet._id).populate({
         path: "owner",
         select: "-password -refreshtoken"
