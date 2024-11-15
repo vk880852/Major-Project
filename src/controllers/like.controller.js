@@ -78,7 +78,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    //TODO: get all videos
+    //TODO: get all ideos
     const liked_video = await Like.aggregate([
         {
             $match: {
