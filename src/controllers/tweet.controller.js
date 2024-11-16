@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import  asyncHandler  from "../utils/asyncHandler.js";
 
+// All stuffed related to the tweet
 const createTweet = asyncHandler(async (req, res) => {
     const { text } = req.body; 
   
